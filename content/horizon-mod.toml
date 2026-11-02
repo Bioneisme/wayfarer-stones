@@ -1,0 +1,9 @@
+id = "wayfarer_stones"
+name = "Wayfarer Stones (assets)"
+version = "0.6.0"
+description = "Textures, models, text, loot, recipes and villages for the Wayfarer Stones native mod, which declares the block and the item. Install both."
+authors = ["bioneisme"]
+api = "0.2"
+side = "both"
+capabilities = ["registries"]
+namespaces = []

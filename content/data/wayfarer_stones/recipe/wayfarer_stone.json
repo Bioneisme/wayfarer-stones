@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [" E ", "SAS", "SSS"],
+  "key": {
+    "S": "minecraft:stone_bricks",
+    "A": "minecraft:amethyst_shard",
+    "E": "minecraft:ender_pearl"
+  },
+  "result": { "id": "wayfarer_stones:wayfarer_stone", "count": 1 }
+}

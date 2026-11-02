@@ -1,0 +1,18 @@
+{
+  "horizon:add_to": "minecraft:village/savanna/houses",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "lithostitched:guaranteed",
+        "count": 1,
+        "delegate": {
+          "element_type": "minecraft:single_pool_element",
+          "location": "wayfarer_stones:village/savanna",
+          "projection": "rigid",
+          "processors": "minecraft:empty"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "wayfarer_stones:item/wayfarer_stone"
+  }
+}
