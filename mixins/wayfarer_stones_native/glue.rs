@@ -236,10 +236,12 @@ pub(in crate::game) fn blocks(blocks: &mut Vec<Block>) {
             },
             shapes: Some(BlockShapes {
                 property: "waterlogged".into(),
+                properties: Vec::new(),
                 values: BTreeMap::from([
                     ("false".to_owned(), shape.clone()),
                     ("true".to_owned(), shape),
                 ]),
+                default: None,
             }),
             item,
             ..Default::default()

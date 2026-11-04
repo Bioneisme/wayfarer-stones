@@ -3,13 +3,10 @@ id = "wayfarer_stones_native"
 version = "0.6.0"
 priority = 100
 
-# The Horizon source this bundle is planned and built on. It needs API 145
-# (`native_blocks`, `native_items`: blocks and items declared in code), which
-# Nightly 2026-11-01 (API 80) does not have yet, so it pins a `main` commit of
-# 2026-11-02. Move it to the first Nightly whose NATIVE_HOOKS_API is 145 or
-# more (compatibility.json `hooks`), together with compatibility.json.
+# The Horizon source this bundle is planned and built on: Nightly 2026-11-04
+# (`nightly-source/2026-11-04-67dad0d`). It needs API 145 (`native_blocks`, `native_items`).
 [compatibility]
-horizon_revision = "3a264943c7a3a3ed02e6ee608443f558d98f208f"
+horizon_revision = "67dad0d1a5adca139b426c8114e74a33b376ba64"
 
 # The rules: no game type, also the mod's Cargo library (its tests).
 [[module]]
