@@ -1,6 +1,6 @@
 [mod]
 id = "wayfarer_stones_native"
-version = "0.6.0"
+version = "0.6.1"
 priority = 100
 
 # The Horizon source this bundle is planned and built on: Nightly 2026-11-04
@@ -274,6 +274,18 @@ bindings = [
   { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
   { name = "context", ty = "&horizon_client::mod_api::NativeLifecycleContext", value = "context" },
   { name = "phase", ty = "horizon_client::mod_api::ServerTickPhase", value = "phase" },
+]
+
+# A player joining: the warning when the assets half is missing (API 1).
+[[injection]]
+id = "logged-in"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_player_logged_in"
+helper = "logged_in.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "player", ty = "u128", value = "player" },
+  { name = "name", ty = "&str", value = "name" },
 ]
 
 # The world closing (API 3).

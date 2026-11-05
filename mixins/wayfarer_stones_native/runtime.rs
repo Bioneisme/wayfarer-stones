@@ -22,7 +22,7 @@ use std::{collections::BTreeMap, fmt::Display};
 /// The native part's id: its registry entry, and what turns it on. The blocks and items are in the
 /// namespace of the content mod, whose id it is; the game joins them to it there.
 pub const ID: &str = "wayfarer_stones_native";
-pub const VERSION: &str = "0.6.0";
+pub const VERSION: &str = "0.6.1";
 pub const DESCRIPTION: &str = "Wayfarer Stones: place one, right-click to activate it, and travel between the ones you know.";
 /// The block and the item the mod declares, in its namespace.
 pub const BLOCK: &str = "wayfarer_stones:wayfarer_stone";
@@ -1643,10 +1643,14 @@ mod tests {
     #[test]
     fn every_line_is_in_both_languages_with_the_same_arguments() {
         let (en, ru) = (language("en_us"), language("ru_ru"));
-        let used: std::collections::BTreeSet<String> = ["runtime.rs", "glue.rs"]
-            .iter()
-            .flat_map(|s| keys_in(&file(&format!("mixins/wayfarer_stones_native/{s}"))))
-            .collect();
+        let used: std::collections::BTreeSet<String> = [
+            "mixins/wayfarer_stones_native/runtime.rs",
+            "mixins/wayfarer_stones_native/glue.rs",
+            "content/data/wayfarer_stones/function/check.mcfunction",
+        ]
+        .iter()
+        .flat_map(|s| keys_in(&file(s)))
+        .collect();
         assert!(used.len() > 40, "{used:?}");
         for key in &used {
             assert!(en.contains_key(key), "{key} isn't in en_us");

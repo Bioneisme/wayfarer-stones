@@ -67,5 +67,6 @@
   "wayfarer_stones.screen.cant_open": "The screen can't open here: use /wayfarer list and /wayfarer to <name>.",
   "wayfarer_stones.travel.cooldown": "You can travel again in %s s.",
   "wayfarer_stones.travel.blocked": "That stone is blocked: nowhere safe to land beside it or on top.",
-  "wayfarer_stones.screen.cooldown": "You can travel again in %s s"
+  "wayfarer_stones.screen.cooldown": "You can travel again in %s s",
+  "wayfarer_stones.missing.native": "Wayfarer Stones: the native mod is missing, so there are no stones. Install wayfarer_stones_native too:"
 }

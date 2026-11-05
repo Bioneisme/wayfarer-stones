@@ -63,7 +63,7 @@ Each world keeps its settings in `horizon-wayfarer-stones/config.json`, in the w
 ## Good to know
 
 - The mod has two parts, and needs both: the code (`wayfarer_stones_native`) and the textures, text, recipes and villages
-  (`wayfarer_stones`).
+  (`wayfarer_stones`). If one is missing, the game says so in chat, with a link to its page.
 - Every player needs the mod to use the screen. A gamepad can close it but not click on it.
 - It runs with your account's permissions, as every native mod does.
 

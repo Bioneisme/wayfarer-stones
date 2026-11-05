@@ -20,7 +20,7 @@ use horizon_client::{
         NativeCommand, NativeLifecycleContext, NativeMod, NativeScreenView, NativeServerPlayer, ServerTickPhase,
         WorldPhase,
     },
-    text::{self, Text},
+    text::{self, ClickEvent, Style, Text},
 };
 use horizon_core::position::BlockPos;
 use horizon_mods::content::{Block, BlockProperties, BlockShapes, Item, Rarity};
@@ -1028,6 +1028,38 @@ pub(in crate::game) fn tick(
 }
 
 /// The world closing: the files are written and the state let go.
+/// A player joins. The assets half, if it's there, reads the tag to know this
+/// half is too (content/data/wayfarer_stones/function/check.mcfunction). Without the
+/// assets half, which brings the block's loot table, they hear what's missing and
+/// where to get it, in plain text, as the language files are gone too.
+pub(in crate::game) fn logged_in(game: &mut Game<'_>, player: u128, name: &str) {
+    if !game.native_on(rules::ID) {
+        return;
+    }
+    let registry = &game.pack.assets.registry;
+    let assets = registry
+        .default_state(rules::BLOCK)
+        .is_some_and(|state| world_items!(game).block_loot_table(registry, state).is_some());
+    if assets {
+        game.native_run_command(&format!("tag {name} add wayfarer_stones.native"));
+        return;
+    }
+    const ASSETS_PAGE: &str = "https://playhorizon.dev/mods/wayfarer_stones";
+    let link = Style {
+        color: Some(text::AQUA),
+        underlined: Some(true),
+        click: Some(ClickEvent::OpenUrl(ASSETS_PAGE.to_owned())),
+        ..Style::default()
+    };
+    for line in [
+        "Wayfarer Stones: the assets mod is missing. Install wayfarer_stones too: ",
+        "Wayfarer Stones: не установлен мод с ассетами. Поставьте ещё wayfarer_stones: ",
+    ] {
+        let line = Text::literal(line).append(Text::styled(ASSETS_PAGE, link.clone()));
+        game.native_tell(player, line);
+    }
+}
+
 pub(in crate::game) fn lifecycle(phase: WorldPhase) {
     if !matches!(phase, WorldPhase::WorldCloseFinal | WorldPhase::WorldCloseFailed) {
         return;

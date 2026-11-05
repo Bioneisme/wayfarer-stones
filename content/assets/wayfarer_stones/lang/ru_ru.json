@@ -67,5 +67,6 @@
   "wayfarer_stones.screen.cant_open": "Здесь окно не откроется: используйте /wayfarer list и /wayfarer to <имя>.",
   "wayfarer_stones.travel.cooldown": "Снова переместиться можно через %s с.",
   "wayfarer_stones.travel.blocked": "Камень застроен: ни рядом, ни наверху нет безопасного места.",
-  "wayfarer_stones.screen.cooldown": "Перемещение через %s с"
+  "wayfarer_stones.screen.cooldown": "Перемещение через %s с",
+  "wayfarer_stones.missing.native": "Wayfarer Stones: не установлен нативный мод, поэтому камней нет. Поставьте ещё wayfarer_stones_native:"
 }
