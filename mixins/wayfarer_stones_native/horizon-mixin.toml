@@ -1,6 +1,6 @@
 [mod]
 id = "wayfarer_stones_native"
-version = "0.6.1"
+version = "0.6.2"
 priority = 100
 
 # The Horizon source this bundle is planned and built on: Nightly 2026-11-04
@@ -21,6 +21,20 @@ id = "glue"
 file = "crates/horizon-client/src/game.rs"
 name = "wayfarer_stones_glue"
 source = "glue.rs"
+
+# The content mod (textures, models, text, loot, recipes, villages) rides inside this bundle, so the mod is one
+# file: the game's list of content mods gets it as a dev mod (written once to .horizon-cache).
+[[injection]]
+id = "embedded-content"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::mods::content_root"
+helper = "embedded_content.rs"
+bindings = [
+  { name = "root", ty = "&std::path::Path", value = "root" },
+  { name = "enabled", ty = "&std::collections::BTreeSet<String>", value = "enabled" },
+  { name = "dev", ty = "&[std::path::PathBuf]", value = "dev" },
+]
 
 # The block and the item, declared in code (API 145).
 [[injection]]

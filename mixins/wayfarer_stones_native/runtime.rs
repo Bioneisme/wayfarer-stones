@@ -22,7 +22,7 @@ use std::{collections::BTreeMap, fmt::Display};
 /// The native part's id: its registry entry, and what turns it on. The blocks and items are in the
 /// namespace of the content mod, whose id it is; the game joins them to it there.
 pub const ID: &str = "wayfarer_stones_native";
-pub const VERSION: &str = "0.6.1";
+pub const VERSION: &str = "0.6.2";
 pub const DESCRIPTION: &str = "Wayfarer Stones: place one, right-click to activate it, and travel between the ones you know.";
 /// The block and the item the mod declares, in its namespace.
 pub const BLOCK: &str = "wayfarer_stones:wayfarer_stone";

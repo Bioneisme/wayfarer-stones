@@ -62,8 +62,8 @@ Each world keeps its settings in `horizon-wayfarer-stones/config.json`, in the w
 
 ## Good to know
 
-- The mod has two parts, and needs both: the code (`wayfarer_stones_native`) and the textures, text, recipes and villages
-  (`wayfarer_stones`). If one is missing, the game says so in chat, with a link to its page.
+- The mod is one file, `wayfarer_stones_native`: its textures, text, recipes and villages are inside it. The old
+  separate `wayfarer_stones` (assets) is no longer needed since 0.6.2; a copy you already have still works.
 - Every player needs the mod to use the screen. A gamepad can close it but not click on it.
 - It runs with your account's permissions, as every native mod does.
 
@@ -71,10 +71,12 @@ Each world keeps its settings in `horizon-wayfarer-stones/config.json`, in the w
 
 ```sh
 cargo test                                      # the rules
-horizon-launcher native-build ./mixins/wayfarer_stones_native --trust-native-code
-cd content && cargo horizon-mod build           # the content mod
+tools/build.sh package                          # Linux or WSL: dist/wayfarer_stones_native.hnmod, the content inside
+tools/build.sh check                            # cargo check of the game with the mod applied
 ```
 
+`tools/build.sh package` builds `content/` into `mixins/wayfarer_stones_native/data/wayfarer_stones-content.hmod`
+(`native_data!`), which the game loads as a dev content mod.
 `cargo horizon-mod` comes from `cargo install --git https://github.com/horizon-rust/horizon cargo-horizon-mod`.
 `python tools/make_textures.py` and `python tools/make_structures.py` redraw the textures and the village templates.
 
