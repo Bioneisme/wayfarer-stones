@@ -22,7 +22,7 @@ use std::{collections::BTreeMap, fmt::Display};
 /// The native part's id: its registry entry, and what turns it on. The blocks and items are in the
 /// namespace of the content mod, whose id it is; the game joins them to it there.
 pub const ID: &str = "wayfarer_stones_native";
-pub const VERSION: &str = "0.6.2";
+pub const VERSION: &str = "0.6.3";
 pub const DESCRIPTION: &str = "Wayfarer Stones: place one, right-click to activate it, and travel between the ones you know.";
 /// The block and the item the mod declares, in its namespace.
 pub const BLOCK: &str = "wayfarer_stones:wayfarer_stone";
@@ -1586,9 +1586,172 @@ pub fn moved(from: &(String, [f64; 3]), now: (&str, [f64; 3])) -> bool {
     from.0 != now.0 || distance(from.1, now.1) > 1.0
 }
 
+// ---- saving ----------------------------------------------------------------
+
+/// The world's stones, in `DIR`.
+pub const STONES_FILE: &str = "stones.json";
+/// Who knows which stones, in `DIR`.
+pub const PLAYERS_FILE: &str = "players.json";
+
+/// Where a save goes. `stage` writes a file's new bytes beside it, not yet in
+/// its place; `commit` puts a staged file in its place (a rename).
+pub trait SaveFiles {
+    fn stage(&mut self, name: &str, bytes: &[u8]) -> Result<(), String>;
+    fn commit(&mut self, name: &str) -> Result<(), String>;
+}
+
+impl Registry {
+    /// Writes the stones and the players, if something changed, and is clean
+    /// only once both are in place: after a failed write it stays changed, so
+    /// the next save writes both again.
+    ///
+    /// Both files are staged before either is put in place, so a failed write
+    /// (a full disk) leaves the old pair as it was. Only a failed rename
+    /// between the two can leave them apart, and then the stones are the ones
+    /// in place: `stones.json` holds `next_id`, so `players.json` never names a
+    /// stone `stones.json` hasn't handed out, and an id is never handed out
+    /// twice. At worst a player's newest discoveries wait for the retry.
+    pub fn save(&mut self, files: &mut impl SaveFiles) -> Result<(), String> {
+        if !self.changed {
+            return Ok(());
+        }
+        let json = |name: &str, value: &dyn erased::Json| {
+            value.json().map_err(|e| format!("{name}: {e}"))
+        };
+        let stones = json(STONES_FILE, &self.data)?;
+        let players = json(PLAYERS_FILE, &self.players)?;
+        files.stage(STONES_FILE, &stones)?;
+        files.stage(PLAYERS_FILE, &players)?;
+        files.commit(STONES_FILE)?;
+        files.commit(PLAYERS_FILE)?;
+        self.changed = false;
+        Ok(())
+    }
+}
+
+mod erased {
+    /// A document as the file's bytes: pretty JSON and a final newline.
+    pub trait Json {
+        fn json(&self) -> serde_json::Result<Vec<u8>>;
+    }
+
+    impl<T: serde::Serialize> Json for T {
+        fn json(&self) -> serde_json::Result<Vec<u8>> {
+            let mut bytes = serde_json::to_vec_pretty(self)?;
+            bytes.push(b'\n');
+            Ok(bytes)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Files in memory; `fail_stage` / `fail_commit` name a file whose write fails.
+    #[derive(Default)]
+    struct Disk {
+        files: BTreeMap<String, Vec<u8>>,
+        staged: BTreeMap<String, Vec<u8>>,
+        fail_stage: Option<&'static str>,
+        fail_commit: Option<&'static str>,
+        writes: usize,
+    }
+
+    impl SaveFiles for Disk {
+        fn stage(&mut self, name: &str, bytes: &[u8]) -> Result<(), String> {
+            self.writes += 1;
+            if self.fail_stage == Some(name) {
+                return Err(format!("{name}: No space left on device"));
+            }
+            self.staged.insert(name.into(), bytes.to_vec());
+            Ok(())
+        }
+        fn commit(&mut self, name: &str) -> Result<(), String> {
+            if self.fail_commit == Some(name) {
+                return Err(format!("{name}: rename failed"));
+            }
+            let bytes = self.staged.remove(name).ok_or(format!("{name}: not staged"))?;
+            self.files.insert(name.into(), bytes);
+            Ok(())
+        }
+    }
+
+    impl Disk {
+        fn stones(&self) -> Option<Data> {
+            self.files.get(STONES_FILE).map(|b| serde_json::from_slice(b).unwrap())
+        }
+        fn players(&self) -> Option<Players> {
+            self.files.get(PLAYERS_FILE).map(|b| serde_json::from_slice(b).unwrap())
+        }
+    }
+
+    /// A registry with one stone the player `a` knows.
+    fn found_one() -> Registry {
+        let mut r = Registry::new(Config::default(), Data::default(), Players::default());
+        let id = r.place("minecraft:overworld", [0, 64, 0], &actor("a", 0), 0).id;
+        r.activate("a", id);
+        assert!(r.changed);
+        r
+    }
+
+    #[test]
+    fn a_save_whose_first_write_fails_is_retried() {
+        let mut r = found_one();
+        let mut disk = Disk { fail_stage: Some(STONES_FILE), ..Disk::default() };
+        assert!(r.save(&mut disk).is_err());
+        assert!(r.changed, "still to write");
+        assert!(disk.files.is_empty());
+        disk.fail_stage = None;
+        assert!(r.save(&mut disk).is_ok());
+        assert!(!r.changed);
+        assert_eq!(disk.stones().unwrap().stones.len(), 1);
+        assert_eq!(disk.players().unwrap().known["a"].len(), 1);
+    }
+
+    #[test]
+    fn a_save_whose_second_write_fails_leaves_the_old_pair_and_is_retried() {
+        let mut r = found_one();
+        let mut disk = Disk { fail_stage: Some(PLAYERS_FILE), ..Disk::default() };
+        assert!(r.save(&mut disk).is_err());
+        assert!(r.changed, "still to write");
+        assert!(disk.files.is_empty(), "neither file is put in place alone");
+        disk.fail_stage = None;
+        assert!(r.save(&mut disk).is_ok());
+        assert!(!r.changed);
+        assert_eq!(disk.stones().unwrap().stones.len(), 1);
+        assert_eq!(disk.players().unwrap().known["a"].len(), 1);
+    }
+
+    #[test]
+    fn a_failed_rename_never_leaves_players_naming_a_stone_the_stones_file_lacks() {
+        let mut r = found_one();
+        let mut disk = Disk { fail_commit: Some(PLAYERS_FILE), ..Disk::default() };
+        assert!(r.save(&mut disk).is_err());
+        assert!(r.changed, "still to write");
+        // The stones go in place first, so every id players.json names is one
+        // stones.json has handed out (its next_id is past it).
+        assert!(disk.players().is_none());
+        assert_eq!(disk.stones().unwrap().stones.len(), 1);
+        disk.fail_commit = None;
+        assert!(r.save(&mut disk).is_ok());
+        assert!(!r.changed);
+        assert_eq!(disk.players().unwrap().known["a"].len(), 1);
+
+        let mut disk = Disk { fail_commit: Some(STONES_FILE), ..Disk::default() };
+        r.changed = true;
+        assert!(r.save(&mut disk).is_err());
+        assert!(r.changed, "still to write");
+        assert!(disk.files.is_empty(), "players.json waits for stones.json");
+    }
+
+    #[test]
+    fn nothing_changed_writes_nothing() {
+        let mut r = Registry::new(Config::default(), Data::default(), Players::default());
+        let mut disk = Disk::default();
+        assert!(r.save(&mut disk).is_ok());
+        assert_eq!(disk.writes, 0);
+    }
 
     fn actor(uuid: &str, level: u8) -> Actor {
         Actor {

@@ -1,6 +1,6 @@
 [mod]
 id = "wayfarer_stones_native"
-version = "0.6.2"
+version = "0.6.3"
 priority = 100
 
 # The Horizon source this bundle is planned and built on: Nightly 2026-11-04

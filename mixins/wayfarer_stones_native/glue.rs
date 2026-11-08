@@ -56,6 +56,8 @@ struct State {
     /// Errors reading the files: the commands say so instead of writing
     /// over a damaged file.
     broken: Option<String>,
+    /// The last save's error, logged once until a save succeeds.
+    save_error: Option<String>,
 }
 
 static STATE: Mutex<Option<State>> = Mutex::new(None);
@@ -85,24 +87,44 @@ fn read_json<T: serde::de::DeserializeOwned + Default>(path: &Path) -> Result<T,
     }
 }
 
+/// The world's folder as the rules save into it: a file is staged as
+/// `.<name>.tmp` beside it, flushed, and put in place by a rename.
+struct Folder<'a>(&'a Path);
+
+impl Folder<'_> {
+    fn temp(&self, name: &str) -> PathBuf {
+        self.0.join(format!(".{name}.tmp"))
+    }
+}
+
+impl rules::SaveFiles for Folder<'_> {
+    fn stage(&mut self, name: &str, bytes: &[u8]) -> Result<(), String> {
+        let temp = self.temp(name);
+        let write = || -> io::Result<()> {
+            fs::create_dir_all(self.0)?;
+            let mut file = fs::File::create(&temp)?;
+            file.write_all(bytes)?;
+            file.sync_all()
+        };
+        write().map_err(|e| format!("{}: {e}", temp.display()))
+    }
+
+    fn commit(&mut self, name: &str) -> Result<(), String> {
+        let path = self.0.join(name);
+        fs::rename(self.temp(name), &path).map_err(|e| format!("{}: {e}", path.display()))
+    }
+}
+
 /// Written whole and atomically: a temporary file beside it, flushed, then
 /// renamed over the old one.
 fn write_json<T: serde::Serialize>(path: &Path, value: &T) -> Result<(), String> {
-    let write = || -> io::Result<()> {
-        let dir = path.parent().unwrap_or(Path::new("."));
-        fs::create_dir_all(dir)?;
-        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("file");
-        let temp = dir.join(format!(".{name}.tmp"));
-        {
-            let mut file = fs::File::create(&temp)?;
-            let mut bytes = serde_json::to_vec_pretty(value).map_err(io::Error::other)?;
-            bytes.push(b'\n');
-            file.write_all(&bytes)?;
-            file.sync_all()?;
-        }
-        fs::rename(&temp, path)
-    };
-    write().map_err(|e| format!("{}: {e}", path.display()))
+    let dir = path.parent().unwrap_or(Path::new("."));
+    let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("file");
+    let mut bytes = serde_json::to_vec_pretty(value).map_err(|e| format!("{}: {e}", path.display()))?;
+    bytes.push(b'\n');
+    let mut folder = Folder(dir);
+    rules::SaveFiles::stage(&mut folder, name, &bytes)?;
+    rules::SaveFiles::commit(&mut folder, name)
 }
 
 fn open(dir: PathBuf) -> State {
@@ -136,11 +158,11 @@ fn open(dir: PathBuf) -> State {
             rules::Config::default()
         }
     };
-    let data = read_json::<rules::Data>(&dir.join("stones.json")).unwrap_or_else(|e| {
+    let data = read_json::<rules::Data>(&dir.join(rules::STONES_FILE)).unwrap_or_else(|e| {
         broken.get_or_insert(e);
         rules::Data::default()
     });
-    let players = read_json::<rules::Players>(&dir.join("players.json")).unwrap_or_else(|e| {
+    let players = read_json::<rules::Players>(&dir.join(rules::PLAYERS_FILE)).unwrap_or_else(|e| {
         broken.get_or_insert(e);
         rules::Players::default()
     });
@@ -163,6 +185,7 @@ fn open(dir: PathBuf) -> State {
         cooldowns: HashMap::new(),
         commands: Vec::new(),
         broken,
+        save_error: None,
     }
 }
 
@@ -172,30 +195,46 @@ fn state(dir: PathBuf) -> std::sync::MutexGuard<'static, Option<State>> {
     let mut state = STATE.lock().unwrap_or_else(|e| e.into_inner());
     if state.as_ref().is_none_or(|s| s.dir != dir) {
         if let Some(old) = state.as_mut() {
-            save(old);
+            close(old);
         }
         *state = Some(open(dir));
     }
     state
 }
 
+/// Writes what changed. A failed write leaves it changed, so the next save
+/// (once a second) tries again; the error is logged once until one succeeds.
 fn save(st: &mut State) {
-    if !st.reg.changed {
-        return;
-    }
     if st.broken.is_some() {
         // Never write over a file that couldn't be read.
         return;
     }
-    for r in [
-        write_json(&st.dir.join("stones.json"), &st.reg.data),
-        write_json(&st.dir.join("players.json"), &st.reg.players),
-    ] {
-        if let Err(e) = r {
-            log::warn!("[wayfarer_stones] {e}");
+    match st.reg.save(&mut Folder(&st.dir)) {
+        Ok(()) => {
+            if st.save_error.take().is_some() {
+                log::info!("[wayfarer_stones] saved {} again", st.dir.display());
+            }
+        }
+        Err(e) => {
+            if st.save_error.as_ref() != Some(&e) {
+                log::warn!("[wayfarer_stones] can't save, will retry: {e}");
+            }
+            st.save_error = Some(e);
         }
     }
-    st.reg.changed = false;
+}
+
+/// The world's last save, as its state is dropped: what can't be written now
+/// is lost, so it says so.
+fn close(st: &mut State) {
+    save(st);
+    if st.reg.changed && st.broken.is_none() {
+        log::error!(
+            "[wayfarer_stones] {} closed with changes that could not be saved: {}",
+            st.dir.display(),
+            st.save_error.as_deref().unwrap_or("unknown error")
+        );
+    }
 }
 
 fn world_state(game: &Game<'_>) -> Option<std::sync::MutexGuard<'static, Option<State>>> {
@@ -1066,7 +1105,7 @@ pub(in crate::game) fn lifecycle(phase: WorldPhase) {
     }
     let mut state = STATE.lock().unwrap_or_else(|e| e.into_inner());
     if let Some(st) = state.as_mut() {
-        save(st);
+        close(st);
     }
     *state = None;
 }
