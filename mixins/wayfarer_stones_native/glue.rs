@@ -61,6 +61,9 @@ struct State {
 }
 
 static STATE: Mutex<Option<State>> = Mutex::new(None);
+/// Worlds closed with changes their last save couldn't write: kept, and saved
+/// again once a second until it works, or taken back if the world reopens.
+static UNSAVED: Mutex<Vec<State>> = Mutex::new(Vec::new());
 static TICKS: AtomicU64 = AtomicU64::new(0);
 
 // ---- files -----------------------------------------------------------------
@@ -194,10 +197,15 @@ fn open(dir: PathBuf) -> State {
 fn state(dir: PathBuf) -> std::sync::MutexGuard<'static, Option<State>> {
     let mut state = STATE.lock().unwrap_or_else(|e| e.into_inner());
     if state.as_ref().is_none_or(|s| s.dir != dir) {
-        if let Some(old) = state.as_mut() {
+        if let Some(old) = state.take() {
             close(old);
         }
-        *state = Some(open(dir));
+        let mut unsaved = UNSAVED.lock().unwrap_or_else(|e| e.into_inner());
+        *state = Some(match unsaved.iter().position(|s| s.dir == dir) {
+            // Its newest changes never reached the disk: carry on from them.
+            Some(i) => unsaved.swap_remove(i),
+            None => open(dir),
+        });
     }
     state
 }
@@ -224,17 +232,27 @@ fn save(st: &mut State) {
     }
 }
 
-/// The world's last save, as its state is dropped: what can't be written now
-/// is lost, so it says so.
-fn close(st: &mut State) {
-    save(st);
+/// The world's last save, as its state is dropped. What can't be written now
+/// is kept in `UNSAVED` and tried again once a second.
+fn close(mut st: State) {
+    save(&mut st);
     if st.reg.changed && st.broken.is_none() {
         log::error!(
-            "[wayfarer_stones] {} closed with changes that could not be saved: {}",
+            "[wayfarer_stones] {} closed with changes that could not be saved, will retry: {}",
             st.dir.display(),
             st.save_error.as_deref().unwrap_or("unknown error")
         );
+        UNSAVED.lock().unwrap_or_else(|e| e.into_inner()).push(st);
     }
+}
+
+/// Saves the closed worlds' changes that couldn't be written yet.
+fn retry_unsaved() {
+    let mut unsaved = UNSAVED.lock().unwrap_or_else(|e| e.into_inner());
+    unsaved.retain_mut(|st| {
+        save(st);
+        st.reg.changed
+    });
 }
 
 fn world_state(game: &Game<'_>) -> Option<std::sync::MutexGuard<'static, Option<State>>> {
@@ -983,6 +1001,7 @@ pub(in crate::game) fn tick(
     });
     if second {
         save(st);
+        retry_unsaved();
     }
     let commands = std::mem::take(&mut st.commands);
     drop(guard);
@@ -1104,8 +1123,7 @@ pub(in crate::game) fn lifecycle(phase: WorldPhase) {
         return;
     }
     let mut state = STATE.lock().unwrap_or_else(|e| e.into_inner());
-    if let Some(st) = state.as_mut() {
+    if let Some(st) = state.take() {
         close(st);
     }
-    *state = None;
 }
