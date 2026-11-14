@@ -1067,10 +1067,10 @@ pub(in crate::game) fn tick(
 }
 
 /// The world closing: the files are written and the state let go.
-/// A player joins. The assets half, if it's there, reads the tag to know this
-/// half is too (content/data/wayfarer_stones/function/check.mcfunction). Without the
-/// assets half, which brings the block's loot table, they hear what's missing and
-/// where to get it, in plain text, as the language files are gone too.
+/// A player joins. The content, which rides in the same .hmod, reads the tag to know the
+/// code is there too (content/data/wayfarer_stones/function/check.mcfunction). If the
+/// content didn't load (no loot table for the block), they hear it and where the mod is,
+/// in plain text, as the language files are gone too.
 pub(in crate::game) fn logged_in(game: &mut Game<'_>, player: u128, name: &str) {
     if !game.native_on(rules::ID) {
         return;
@@ -1083,18 +1083,18 @@ pub(in crate::game) fn logged_in(game: &mut Game<'_>, player: u128, name: &str) 
         game.native_run_command(&format!("tag {name} add wayfarer_stones.native"));
         return;
     }
-    const ASSETS_PAGE: &str = "https://playhorizon.dev/mods/wayfarer_stones";
+    const MOD_PAGE: &str = "https://playhorizon.dev/mods/wayfarer_stones_native";
     let link = Style {
         color: Some(text::AQUA),
         underlined: Some(true),
-        click: Some(ClickEvent::OpenUrl(ASSETS_PAGE.to_owned())),
+        click: Some(ClickEvent::OpenUrl(MOD_PAGE.to_owned())),
         ..Style::default()
     };
     for line in [
-        "Wayfarer Stones: the assets mod is missing. Install wayfarer_stones too: ",
-        "Wayfarer Stones: не установлен мод с ассетами. Поставьте ещё wayfarer_stones: ",
+        "Wayfarer Stones: its textures and text did not load. Rebuild it in the launcher, or reinstall it: ",
+        "Wayfarer Stones: не загрузились текстуры и тексты. Пересоберите мод в лаунчере или переустановите его: ",
     ] {
-        let line = Text::literal(line).append(Text::styled(ASSETS_PAGE, link.clone()));
+        let line = Text::literal(line).append(Text::styled(MOD_PAGE, link.clone()));
         game.native_tell(player, line);
     }
 }

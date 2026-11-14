@@ -1,6 +1,6 @@
 id = "wayfarer_stones"
 name = "Wayfarer Stones (assets)"
-version = "0.6.3"
+version = "0.7.0"
 description = "Textures, models, text, loot, recipes and villages for the Wayfarer Stones native mod, which declares the block and the item. Since 0.6.2 the native mod carries this inside it, so it is not needed on its own."
 authors = ["bioneisme"]
 api = "0.2"
