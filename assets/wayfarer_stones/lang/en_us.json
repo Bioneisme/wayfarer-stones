@@ -2,7 +2,6 @@
   "block.wayfarer_stones.wayfarer_stone": "Wayfarer Stone",
   "block.wayfarer_stones.wayfarer_stone_top": "Wayfarer Stone",
   "item.wayfarer_stones.wayfarers_scroll": "Wayfarer's Scroll",
-  "wayfarer_stones.mod.description": "Wayfarer Stones: place one, right-click to activate it, and travel between the ones you know.",
   "wayfarer_stones.placed": "Stone \"%s\" placed. Rename it from its screen, or with /wayfarer name <name> beside it.",
   "wayfarer_stones.activated": "Stone \"%s\" activated.",
   "wayfarer_stones.removed": "Stone \"%s\" removed.",
@@ -67,6 +66,5 @@
   "wayfarer_stones.screen.cant_open": "The screen can't open here: use /wayfarer list and /wayfarer to <name>.",
   "wayfarer_stones.travel.cooldown": "You can travel again in %s s.",
   "wayfarer_stones.travel.blocked": "That stone is blocked: nowhere safe to land beside it or on top.",
-  "wayfarer_stones.screen.cooldown": "You can travel again in %s s",
-  "wayfarer_stones.missing.native": "Wayfarer Stones: the native mod is missing, so there are no stones. Install wayfarer_stones_native too:"
+  "wayfarer_stones.screen.cooldown": "You can travel again in %s s"
 }

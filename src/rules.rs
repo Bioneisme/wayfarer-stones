@@ -19,11 +19,8 @@
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, fmt::Display};
 
-/// The native part's id: its registry entry, and what turns it on. The blocks and items are in the
-/// namespace of the content mod, whose id it is; the game joins them to it there.
-pub const ID: &str = "wayfarer_stones_native";
-pub const VERSION: &str = "0.7.0";
-pub const DESCRIPTION: &str = "Wayfarer Stones: place one, right-click to activate it, and travel between the ones you know.";
+/// The mod's id (`horizon-mod.toml`), also its namespace and its own screen's owner.
+pub const ID: &str = "wayfarer_stones";
 /// The block and the item the mod declares, in its namespace.
 pub const BLOCK: &str = "wayfarer_stones:wayfarer_stone";
 /// A stone's upper block. Its own block, not a state of `BLOCK`: a village's
@@ -1772,7 +1769,7 @@ mod tests {
     }
 
     fn language(code: &str) -> BTreeMap<String, String> {
-        let path = format!("content/assets/wayfarer_stones/lang/{code}.json");
+        let path = format!("assets/wayfarer_stones/lang/{code}.json");
         serde_json::from_str(&file(&path)).unwrap()
     }
 
@@ -1807,9 +1804,9 @@ mod tests {
     fn every_line_is_in_both_languages_with_the_same_arguments() {
         let (en, ru) = (language("en_us"), language("ru_ru"));
         let used: std::collections::BTreeSet<String> = [
-            "mixins/wayfarer_stones_native/runtime.rs",
-            "mixins/wayfarer_stones_native/glue.rs",
-            "content/data/wayfarer_stones/function/check.mcfunction",
+            "src/rules.rs",
+            "src/server.rs",
+            "src/screen.rs",
         ]
         .iter()
         .flat_map(|s| keys_in(&file(s)))
@@ -1840,7 +1837,7 @@ mod tests {
     #[test]
     fn both_blocks_drop_one_stone() {
         for name in ["wayfarer_stone", "wayfarer_stone_top"] {
-            let path = format!("content/data/wayfarer_stones/loot_table/blocks/{name}.json");
+            let path = format!("data/wayfarer_stones/loot_table/blocks/{name}.json");
             let table: serde_json::Value = serde_json::from_str(&file(&path)).unwrap();
             let pool = &table["pools"][0];
             assert_eq!(pool["condition"]["type"], "minecraft:survives_explosion", "{name}");

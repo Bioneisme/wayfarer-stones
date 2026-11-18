@@ -2,7 +2,6 @@
   "block.wayfarer_stones.wayfarer_stone": "Камень странника",
   "block.wayfarer_stones.wayfarer_stone_top": "Камень странника",
   "item.wayfarer_stones.wayfarers_scroll": "Свиток странника",
-  "wayfarer_stones.mod.description": "Камни странника: поставьте камень, активируйте его правым кликом и перемещайтесь между знакомыми камнями.",
   "wayfarer_stones.placed": "Камень «%s» установлен. Переименовать его можно в его окне или командой /wayfarer name <имя> рядом с ним.",
   "wayfarer_stones.activated": "Камень «%s» активирован.",
   "wayfarer_stones.removed": "Камень «%s» убран.",
@@ -67,6 +66,5 @@
   "wayfarer_stones.screen.cant_open": "Здесь окно не откроется: используйте /wayfarer list и /wayfarer to <имя>.",
   "wayfarer_stones.travel.cooldown": "Снова переместиться можно через %s с.",
   "wayfarer_stones.travel.blocked": "Камень застроен: ни рядом, ни наверху нет безопасного места.",
-  "wayfarer_stones.screen.cooldown": "Перемещение через %s с",
-  "wayfarer_stones.missing.native": "Wayfarer Stones: не установлен нативный мод, поэтому камней нет. Поставьте ещё wayfarer_stones_native:"
+  "wayfarer_stones.screen.cooldown": "Перемещение через %s с"
 }

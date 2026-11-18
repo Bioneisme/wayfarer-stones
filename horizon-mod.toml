@@ -1,0 +1,16 @@
+id = "wayfarer_stones"
+name = "Wayfarer Stones"
+version = "0.8.0"
+description = "Place a stone, right-click to activate it, and travel between the ones you know."
+authors = ["bioneisme"]
+license = "MIT"
+api = "0.2"
+side = "both"
+# registries: "May add blocks, items, mob effects and entity types to your worlds".
+capabilities = ["registries"]
+
+# Built by the launcher against this Horizon commit's prebuilt game.
+[native]
+game = "26.3"
+horizon = "0d34b3e34c11b90fc21ec1f344bed52ce0c76adc"
+mixins = "e59da9094f0c2fdda6c627fe9eff22dec6a906f0"
