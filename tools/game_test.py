@@ -3,9 +3,12 @@
 click activates it and opens the screen; a command renames a stone and travels to it; a piston doesn't move a
 stone; breaking it takes both blocks and the registry entry; the scroll opens the screen from anywhere.
 
-    python tools/game_test.py GAME_FOLDER CTL
+    python tools/game_test.py GAME_FOLDER CTL INSTANCE VERSION
 
-GAME_FOLDER is a test instance's folder with the mod built in; CTL its version's horizon-ctl.exe.
+GAME_FOLDER is a test instance's folder with the mod built in, CTL its version's horizon-ctl.exe, INSTANCE and VERSION
+the instance and the native build to play. A build with native mods starts only through the launcher's Play
+(`horizon-launcher play`, which takes the cache leases); HORIZON_LAUNCHER (default D:/Games/HorizonLauncher/
+horizon-launcher.exe) is the launcher, HORIZON_LAUNCHER_HOME its real data folder.
 """
 import json
 import os
@@ -14,7 +17,8 @@ import subprocess
 import sys
 import time
 
-GAME, CTL = sys.argv[1:3]
+GAME, CTL, INSTANCE, VERSION = sys.argv[1:5]
+LAUNCHER = os.environ.get("HORIZON_LAUNCHER", "D:/Games/HorizonLauncher/horizon-launcher.exe")
 os.environ["HORIZON_HOME"] = GAME
 os.environ["MSYS_NO_PATHCONV"] = "1"
 sys.stdout.reconfigure(encoding="utf-8")
@@ -64,8 +68,16 @@ def position():
 
 
 shutil.rmtree(os.path.join(GAME, "saves", WORLD), ignore_errors=True)
-print(" launch:", str(ctl("launch", "--world", WORLD, "--seed", "12345", "--creative", "--wait", "--offscreen", timeout=280))[:80])
-ctl("wait-ready", timeout=280)
+subprocess.Popen([LAUNCHER, "play", "--instance", INSTANCE, "--version", VERSION, "--world", WORLD, "--creative",
+                  "--arg", "--control", "--arg", "--seed", "--arg", "12345"],
+                 env={k: v for k, v in os.environ.items() if k != "HORIZON_HOME"},
+                 stdout=open(os.path.join(GAME, "play.log"), "w"), stderr=subprocess.STDOUT)
+# Until the player stands in the world: the game takes a while to start and load it.
+for _ in range(100):
+    if position():
+        break
+    time.sleep(3)
+ctl("wait-ready", 60, timeout=120)
 pos = None
 for _ in range(60):
     pos = position()
@@ -74,6 +86,7 @@ for _ in range(60):
     ctl("wait", 10)
 cx, cz = int(pos[0] // 1), int(pos[2] // 1)
 y = 200
+chat("gamemode creative")
 chat("gamerule spawn_mobs false")
 chat(f"fill {cx - 4} {y - 1} {cz - 4} {cx + 44} {y - 1} {cz + 4} minecraft:stone")
 chat(f"tp @s {cx + 0.5} {y} {cz + 0.5}")
@@ -100,7 +113,7 @@ print(" interact:", str(ctl("interact", *a))[:120])
 ctl("wait", 20)
 screen = json.dumps(ctl("screen"))
 check("a right click opens the screen", '"mod"' in screen or "wayfarer" in screen, screen[:300])
-ctl("key", "esc")
+ctl("close")
 ctl("wait", 10)
 
 # A second stone, renamed by command, and a travel to it.
@@ -144,7 +157,7 @@ ctl("use-item")
 ctl("wait", 20)
 screen = json.dumps(ctl("screen"))
 check("the scroll opens the screen", '"mod"' in screen or "wayfarer" in screen, screen[:300])
-ctl("key", "esc")
+ctl("close")
 
 ctl("quit")
 time.sleep(6)
