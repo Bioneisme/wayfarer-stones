@@ -19,8 +19,9 @@
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, fmt::Display};
 
-/// The mod's id (`horizon-mod.toml`), also its namespace and its own screen's owner.
-pub const ID: &str = "wayfarer_stones";
+/// The mod's id (`horizon-mod.toml`) and its own screen's owner. Its blocks, items and files are in the namespace
+/// `wayfarer_stones`, which the manifest lists.
+pub const ID: &str = "wayfarer_stones_native";
 /// The block and the item the mod declares, in its namespace.
 pub const BLOCK: &str = "wayfarer_stones:wayfarer_stone";
 /// A stone's upper block. Its own block, not a state of `BLOCK`: a village's

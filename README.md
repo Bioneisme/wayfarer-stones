@@ -62,12 +62,13 @@ Each world keeps its settings in `horizon-wayfarer-stones/config.json`, in the w
 
 ## Good to know
 
-- The mod is one native package, `wayfarer_stones`: its code, textures, text, recipes and villages are all in it.
-  Install it, and the launcher builds it for your Horizon. 0.8.0 is built on Nightly 2026-11-21 (8f83e5c), the first
-  with the mod SDK, and on Horizon's mod API.
-- **Coming from 0.7 or older:** remove `wayfarer_stones_native` (the old `.hnmod`, which launchers from 0.2.70 no
-  longer load) and the separate `wayfarer_stones` (assets), then install this one. Your stones stay: the blocks,
-  `horizon-wayfarer-stones/` in each world and its settings are the same.
+- The mod is one native package, `wayfarer_stones_native`: its code, textures, text, recipes and villages are all in
+  it. Install it, and the launcher builds it for your Horizon. 0.8.0 is built on Nightly 2026-11-21 (8f83e5c), the
+  first with the mod SDK, and on Horizon's mod API.
+- **Coming from 0.7 or older:** update `wayfarer_stones_native` (launchers from 0.2.70 no longer load the old
+  `.hnmod`), and remove the separate `wayfarer_stones` (assets) if you still have it: both use the `wayfarer_stones`
+  namespace, and the game keeps only one of them. Your stones stay: the blocks, `horizon-wayfarer-stones/` in each
+  world and its settings are the same.
 - Every player needs the mod to use the screen. A gamepad can close it but not click on it.
 - It runs with your account's permissions, as every native mod does.
 
@@ -79,7 +80,7 @@ repository's tools and publishing stay outside it, since a package takes only it
 ```sh
 tools/check.sh                                  # cargo check, then the rules' tests
 horizon-launcher native-build wayfarer_stones --instance NAME --trust-native-code
-cd wayfarer_stones && cargo horizon-mod build   # target/horizon-mod/wayfarer_stones.hmod
+cd wayfarer_stones && cargo horizon-mod build   # target/horizon-mod/wayfarer_stones_native.hmod
 python tools/game_test.py GAME_FOLDER CTL INSTANCE VERSION   # in the game, through the launcher's Play
 ```
 

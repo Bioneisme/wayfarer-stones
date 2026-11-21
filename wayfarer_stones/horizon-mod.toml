@@ -1,4 +1,4 @@
-id = "wayfarer_stones"
+id = "wayfarer_stones_native"
 name = "Wayfarer Stones"
 version = "0.8.0"
 description = "Place a stone, right-click to activate it, and travel between the ones you know."
@@ -8,6 +8,8 @@ api = "0.2"
 side = "both"
 # registries: "May add blocks, items, mob effects and entity types to your worlds".
 capabilities = ["registries"]
+# The blocks, items and files are in the namespace the mod has always used, so saved worlds keep their stones.
+namespaces = ["wayfarer_stones"]
 
 # Built by the launcher against this Horizon commit's prebuilt game.
 [native]
