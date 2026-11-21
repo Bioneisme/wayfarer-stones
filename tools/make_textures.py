@@ -3,7 +3,7 @@
 
     python tools/make_textures.py [PREVIEW.png]
 
-Writes content/assets/wayfarer_stones/textures/{block,item,gui}/*.png, and with an argument a magnified preview.
+Writes wayfarer_stones/assets/wayfarer_stones/textures/{block,item,gui}/*.png, and with an argument a magnified preview.
 """
 import math
 import struct
@@ -11,7 +11,7 @@ import sys
 import zlib
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1] / "content" / "assets" / "wayfarer_stones" / "textures"
+ROOT = Path(__file__).resolve().parents[1] / "wayfarer_stones" / "assets" / "wayfarer_stones" / "textures"
 
 STONE = {
     "h": (150, 156, 172, 255),  # a lit edge

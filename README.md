@@ -62,22 +62,31 @@ Each world keeps its settings in `horizon-wayfarer-stones/config.json`, in the w
 
 ## Good to know
 
-- The mod is one file, `wayfarer_stones_native`: its textures, text, recipes and villages are inside it. The old
-  separate `wayfarer_stones` (assets) is not needed since 0.6.2. 0.7.0 is built on Nightly 2026-11-13 (9f42064).
+- The mod is one native package, `wayfarer_stones`: its code, textures, text, recipes and villages are all in it.
+  Install it, and the launcher builds it for your Horizon. 0.8.0 is built on Nightly 2026-11-21 (8f83e5c), the first
+  with the mod SDK, and on Horizon's mod API.
+- **Coming from 0.7 or older:** remove `wayfarer_stones_native` (the old `.hnmod`, which launchers from 0.2.70 no
+  longer load) and the separate `wayfarer_stones` (assets), then install this one. Your stones stay: the blocks,
+  `horizon-wayfarer-stones/` in each world and its settings are the same.
 - Every player needs the mod to use the screen. A gamepad can close it but not click on it.
 - It runs with your account's permissions, as every native mod does.
 
 ## Build
 
+The package is the `wayfarer_stones/` folder: `horizon-mod.toml`, `Cargo.toml`, `src/`, `assets/` and `data/`. The
+repository's tools and publishing stay outside it, since a package takes only its own files.
+
 ```sh
-cargo test                                      # the rules
-tools/build.sh package                          # Linux or WSL: dist/wayfarer_stones_native.hnmod, the content inside
-tools/build.sh check                            # cargo check of the game with the mod applied
+tools/check.sh                                  # cargo check, then the rules' tests
+horizon-launcher native-build wayfarer_stones --instance NAME --trust-native-code
+cd wayfarer_stones && cargo horizon-mod build   # target/horizon-mod/wayfarer_stones.hmod
+python tools/game_test.py GAME_FOLDER CTL INSTANCE VERSION   # in the game, through the launcher's Play
 ```
 
-`tools/build.sh package` builds `content/` into `mixins/wayfarer_stones_native/data/wayfarer_stones-content.hmod`
-(`native_data!`), which the game loads as a dev content mod.
-`cargo horizon-mod` comes from `cargo install --git https://github.com/horizon-rust/horizon --rev 9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0 cargo-horizon-mod`.
+Any `cargo horizon-mod` command fetches the pinned SDK into `wayfarer_stones/.horizon/sdk/` (never committed).
+`Cargo.lock` is `horizon-launcher native-lock`'s: registry pins only, at the versions the pinned Horizon uses;
+`tools/check.sh` keeps it as it is. `cargo horizon-mod` comes from
+`cargo install --git https://github.com/horizon-rust/horizon --rev 8f83e5c85ae3b9a117f742e8d91170c5c9080a06 cargo-horizon-mod`.
 `python tools/make_textures.py` and `python tools/make_structures.py` redraw the textures and the village templates.
 
 ## License

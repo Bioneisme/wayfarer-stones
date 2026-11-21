@@ -11,7 +11,7 @@ import json
 import struct
 from pathlib import Path
 
-DATA = Path(__file__).resolve().parents[1] / "content" / "data"
+DATA = Path(__file__).resolve().parents[1] / "wayfarer_stones" / "data"
 # DataVersion of Minecraft 26.3: a template this new is read as it is.
 DATA_VERSION = 5023
 # The village, and the block of the floor its stone stands on.
