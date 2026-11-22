@@ -1,6 +1,6 @@
 id = "wayfarer_stones_native"
 name = "Wayfarer Stones"
-version = "0.8.0"
+version = "0.8.1"
 description = "Place a stone, right-click to activate it, and travel between the ones you know."
 authors = ["bioneisme"]
 license = "MIT"
@@ -14,5 +14,5 @@ namespaces = ["wayfarer_stones"]
 # Built by the launcher against this Horizon commit's prebuilt game.
 [native]
 game = "26.3"
-horizon = "8f83e5c85ae3b9a117f742e8d91170c5c9080a06"
+horizon = "2b77287de099c9316278ba7ac4d83590fdb7ef30"
 mixins = "e59da9094f0c2fdda6c627fe9eff22dec6a906f0"
